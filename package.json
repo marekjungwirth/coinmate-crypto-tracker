@@ -1,0 +1,55 @@
+{
+  "name": "crypto-tracker-electron",
+  "version": "1.0.0",
+  "description": "Jednoduchý tracker pro BTC a Coinmate.",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder"
+  },
+  "author": "Marek Jungwirth",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^25.0.0",
+    "electron-builder": "^24.4.0"
+  },
+  "dependencies": {
+    "crypto-js": "^4.1.1",
+    "electron-fetch": "^1.9.1",
+    "electron-store": "^8.1.0"
+  },
+  "build": {
+      "appId": "com.marekjungwirth.cryptotracker",
+      "productName": "Crypto Tracker",
+      "mac": {
+        "category": "public.app-category.finance",
+        "target": [
+          "dmg"
+        ],
+        "icon": "build/icon.icns",
+        "hardenedRuntime": true,
+        "gatekeeperAssess": false
+      },
+      "dmg": {
+        "contents": [
+          {
+            "x": 130,
+            "y": 220
+          },
+          {
+            "x": 410,
+            "y": 220,
+            "type": "link",
+            "path": "/Applications"
+          }
+        ],
+        "window": {
+          "width": 540,
+          "height": 380
+        }
+      },
+      "directories": {
+        "buildResources": "build",
+        "output": "dist"
+      }
+    }

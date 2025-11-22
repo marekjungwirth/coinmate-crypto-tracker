@@ -1,0 +1,26 @@
+# Závislosti (tohle je obrovské, nikdy nepushovat)
+node_modules/
+
+# Produkční buildy (výsledné .app, .dmg)
+dist/
+
+# Dočasné soubory z macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Logy a debugy
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Pracovní/Záložní soubory (abychom měli repo čisté)
+index_upravy.html
+
+# Konfigurace editorů
+.vscode/
+.idea/
+
+# Lokální Env soubory (pro jistotu, kdybys je někdy přidal)
+.env
+.env.local

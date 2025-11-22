@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.tailwindcss.com 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src https://api.coingecko.com;">
+    <title>Crypto Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: transparent; 
+            transition: color 0.3s ease;
+            overflow-x: hidden;
+        }
+        /* Glassmorphism */
+        .card { 
+            background-color: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 1rem; 
+            padding: 1.25rem; 
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+            
+            -webkit-app-region: no-drag; 
+            cursor: default;
+        }
+        
+        .draggable { -webkit-app-region: drag; }
+        .no-drag { -webkit-app-region: no-drag; }
+        
+        /* --- DARK MODE --- */
+        .dark body { color: #f3f4f6; }
+        .dark .card { 
+            background-color: rgba(30, 41, 59, 0.6);
+            border-color: rgba(255, 255, 255, 0.1); 
+        }
+        .dark .card h3 { color: white; } 
+        .dark .card .text-gray-500 { color: #9ca3af; } 
+        .dark .card .text-gray-800 { color: white; }   
+        .dark .card .text-gray-900 { color: white; }   
+        .dark input, .dark select {
+            background-color: rgba(17, 24, 39, 0.8);
+            color: white;
+            border-color: #374151;
+        }
+        #settings-modal { background-color: rgba(255, 255, 255, 0.95); }
+        .dark #settings-modal { background-color: rgba(15, 23, 42, 0.98); color: #f3f4f6; }
+        .icon-btn { color: #1f2937; }
+        .dark .icon-btn { color: #f3f4f6; }
+
+        /* --- PRIVACY MODE BLUR --- */
+        .blur-sensitive {
+            filter: blur(6px);
+            transition: filter 0.3s ease;
+        }
+        
+        /* Unblur při najetí na kartu */
+        .card:hover .blur-sensitive, 
+        #footer-container:hover .blur-sensitive {
+            filter: blur(0);
+        }
+
+        /* --- ROTACE ŠIPKY --- */
+        .rotate-45-up { transform: rotate(-45deg); }
+        .rotate-45-down { transform: rotate(45deg); }
+        .rotate-0-flat { transform: rotate(0deg); }
+    </style>
+</head>
+<body class="antialiased text-gray-800 h-screen flex flex-col">
+
+    <div class="container mx-auto p-4 max-w-md flex-grow flex flex-col draggable">
+        
+        <header class="relative flex items-center justify-center py-8 w-full">
+            <h1 class="text-4xl font-bold tracking-tight opacity-90 text-gray-900 dark:text-white whitespace-nowrap z-0">
+                Crypto Tracker
+            </h1>
+            <div class="absolute right-6 top-1/2 -translate-y-1/2 z-10 flex items-center">
+                <button id="open-settings" class="no-drag p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition icon-btn" title="Nastavení">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
+                        <path fill-rule="evenodd" d="M11.078 2.25c-.917 0-1.699.663-1.85 1.567L9.05 5.389c-.42.18-.832.411-1.235.68l-1.3-1.17a1.875 1.875 0 00-2.556.158l-1.149 1.15a1.875 1.875 0 00-.158 2.556l1.17 1.299c-.269.403-.5.816-.68 1.236l-1.57.177a1.875 1.875 0 00-1.568 1.85v1.649c0 .917.663 1.699 1.567 1.85l1.569.178c.18.42.411.832.68 1.235l-1.17 1.3a1.875 1.875 0 00.158 2.556l1.15 1.149c.69.69 1.812.766 2.556.158l1.299-1.17c.403.269.816.5 1.236.68l.177 1.57a1.875 1.875 0 001.85 1.568h1.649c.917 0 1.699-.663 1.85-1.567l.178-1.569c.42-.18.832-.411 1.235-.68l1.3 1.17a1.875 1.875 0 002.556-.158l1.149-1.15a1.875 1.875 0 00.158-2.556l-1.17-1.299c.269-.403.5-.816.68-1.236l1.57-.177a1.875 1.875 0 001.568-1.85v-1.649c0-.917-.663-1.699-1.567-1.85l-1.569-.178c-.18-.42-.411-.832-.68-1.235l1.17-1.3a1.875 1.875 0 00-.158-2.556l-1.15-1.149a1.875 1.875 0 00-2.556-.158l-1.299 1.17a9.516 9.516 0 00-1.236-.68l-.177-1.57a1.875 1.875 0 00-1.85-1.568h-1.649zM12 15.75a3.75 3.75 0 100-7.5 3.75 3.75 0 000 7.5z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <div id="main-error" class="hidden mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm"></div>
+
+        <div id="crypto-list" class="space-y-4 pb-24">
+            <div class="text-center mt-10 text-gray-500 dark:text-gray-400">Načítám data...</div>
+        </div>
+
+        <div class="fixed bottom-0 left-0 w-full p-4 draggable" id="footer-container">
+            <div class="card no-drag bg-white/80 dark:bg-slate-800/90 shadow-lg border-t border-gray-200 dark:border-gray-700">
+                <div class="flex justify-between items-end">
+                    <div>
+                        <div class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Celková hodnota portfolia</div>
+                        <div class="flex items-center gap-3">
+                            <div id="total-value" class="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-teal-500">---</div>
+                            
+                            <div id="trend-container" class="hidden flex items-center px-2 py-1 rounded-lg bg-gray-100 dark:bg-gray-700">
+                                <svg id="trend-arrow" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5 transition-transform duration-500">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                                </svg>
+                                <span id="trend-percent" class="ml-1 text-sm font-bold"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="settings-modal" class="fixed inset-0 z-50 hidden flex flex-col p-6 overflow-y-auto no-drag transition-colors">
+        <div class="max-w-md mx-auto w-full">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold dark:text-white">Nastavení</h2>
+                <button id="close-settings" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 icon-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
+
+            <form id="settings-form" class="space-y-6">
+                <div class="space-y-3">
+                    <h3 class="text-sm font-bold text-gray-400 uppercase">Vzhled a Data</h3>
+                    
+                    <div class="flex items-center space-x-3 bg-gray-100 dark:bg-gray-700 p-3 rounded-lg">
+                        <input type="checkbox" id="set-privacy" class="w-5 h-5 text-blue-600 rounded focus:ring-blue-500 cursor-pointer">
+                        <div class="flex-grow">
+                            <label for="set-privacy" class="font-medium dark:text-gray-200 cursor-pointer select-none">Privacy Mode</label>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">Rozmaže zůstatky, zaostří při najetí myší na kartu.</p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium mb-1 dark:text-gray-300">Zobrazovat ceny v:</label>
+                        <select id="set-currency" class="w-full p-2 border rounded-lg bg-white/50 focus:ring-2 ring-blue-500 outline-none transition">
+                            <option value="CZK">CZK (Kč)</option>
+                            <option value="EUR">EUR (€)</option>
+                            <option value="USD">USD ($)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium mb-1 dark:text-gray-300">Ukazatel vývoje portfolia:</label>
+                        <select id="set-timeframe" class="w-full p-2 border rounded-lg bg-white/50 focus:ring-2 ring-blue-500 outline-none transition">
+                            <option value="24h">Posledních 24 hodin</option>
+                            <option value="7d">Poslední týden (7 dní)</option>
+                            <option value="30d">Poslední měsíc (30 dní)</option>
+                            <option value="1y">Poslední rok</option>
+                        </select>
+                    </div>
+                </div>
+
+                <hr class="border-gray-200 dark:border-gray-700">
+
+                <div class="space-y-3">
+                    <h3 class="text-sm font-bold text-gray-400 uppercase">Hardware Peněženka</h3>
+                    <div class="flex gap-4 mb-2">
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="radio" name="trezor-unit" value="BTC" class="text-blue-600 focus:ring-blue-500">
+                            <span class="dark:text-white text-sm font-medium">Zadat v BTC</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="radio" name="trezor-unit" value="SATS" class="text-blue-600 focus:ring-blue-500">
+                            <span class="dark:text-white text-sm font-medium">Zadat v SATS</span>
+                        </label>
+                    </div>
+                    <div>
+                        <input type="number" id="set-trezor-value" step="any" class="w-full p-2 border rounded-lg bg-white/50 focus:ring-2 ring-blue-500 outline-none transition" placeholder="0">
+                        <p class="text-xs text-gray-500 mt-1" id="trezor-hint">Zadej množství.</p>
+                    </div>
+                </div>
+
+                <hr class="border-gray-200 dark:border-gray-700">
+
+                <div class="space-y-3">
+                    <h3 class="text-sm font-bold text-gray-400 uppercase">Coinmate API</h3>
+                    <div>
+                        <label class="block text-sm font-medium mb-1 dark:text-gray-300">Client ID</label>
+                        <input type="text" id="set-client-id" class="w-full p-2 border rounded-lg bg-white/50 focus:ring-2 ring-blue-500 outline-none transition" placeholder="Např. 108254">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1 dark:text-gray-300">Public Key</label>
+                        <input type="text" id="set-public-key" class="w-full p-2 border rounded-lg bg-white/50 focus:ring-2 ring-blue-500 outline-none transition">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1 dark:text-gray-300">Private Key</label>
+                        <input type="password" id="set-private-key" class="w-full p-2 border rounded-lg bg-white/50 focus:ring-2 ring-blue-500 outline-none transition">
+                    </div>
+                    
+                    <h3 class="text-sm font-bold text-gray-400 uppercase pt-2">Sledované Měny</h3>
+                    <div class="grid grid-cols-2 gap-2" id="currency-checkboxes"></div>
+                </div>
+
+                <div class="pt-4 pb-10">
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition transform active:scale-95">
+                        Uložit nastavení
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const SUPPORTED_COINS = [
+            { symbol: 'BTC', name: 'Bitcoin', geckoId: 'bitcoin' },
+            { symbol: 'ETH', name: 'Ethereum', geckoId: 'ethereum' },
+            { symbol: 'LTC', name: 'Litecoin', geckoId: 'litecoin' },
+            { symbol: 'XRP', name: 'Ripple', geckoId: 'ripple' },
+            { symbol: 'SOL', name: 'Solana', geckoId: 'solana' },
+            { symbol: 'ADA', name: 'Cardano', geckoId: 'cardano' }
+        ];
+
+        const FIAT_CONFIG = {
+            'CZK': { locale: 'cs-CZ', symbol: 'Kč' },
+            'EUR': { locale: 'de-DE', symbol: '€' },
+            'USD': { locale: 'en-US', symbol: '$' }
+        };
+
+        let currentSettings = {};
+        let marketData = {}; 
+
+        const dom = {
+            cryptoList: document.getElementById('crypto-list'),
+            totalValue: document.getElementById('total-value'),
+            trendContainer: document.getElementById('trend-container'),
+            trendArrow: document.getElementById('trend-arrow'),
+            trendPercent: document.getElementById('trend-percent'),
+            modal: document.getElementById('settings-modal'),
+            form: document.getElementById('settings-form'),
+            error: document.getElementById('main-error'),
+            inputs: {
+                privacy: document.getElementById('set-privacy'),
+                currency: document.getElementById('set-currency'),
+                timeframe: document.getElementById('set-timeframe'),
+                trezorUnitBTC: document.querySelector('input[name="trezor-unit"][value="BTC"]'),
+                trezorUnitSATS: document.querySelector('input[name="trezor-unit"][value="SATS"]'),
+                trezorValue: document.getElementById('set-trezor-value'),
+                clientId: document.getElementById('set-client-id'),
+                pubKey: document.getElementById('set-public-key'),
+                privKey: document.getElementById('set-private-key'),
+                currencies: document.getElementById('currency-checkboxes')
+            }
+        };
+
+        const formatFiat = (num, currencyCode) => {
+            const config = FIAT_CONFIG[currencyCode] || FIAT_CONFIG['CZK'];
+            return num.toLocaleString(config.locale, { style: 'currency', currency: currencyCode, maximumFractionDigits: 0 });
+        };
+
+        const formatCrypto = (num, symbol) => `${num.toLocaleString('cs-CZ', { maximumFractionDigits: 8 })} ${symbol}`;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            window.electronAPI.onThemeUpdate((isDark) => {
+                isDark ? document.body.classList.add('dark') : document.body.classList.remove('dark');
+            });
+
+            currentSettings = await window.electronAPI.getSettings();
+            
+            if (!currentSettings.currency) currentSettings.currency = 'CZK';
+            if (!currentSettings.timeframe) currentSettings.timeframe = '24h';
+            if (!currentSettings.trezorUnit) currentSettings.trezorUnit = 'SATS';
+            if (typeof currentSettings.trezorValue === 'undefined') currentSettings.trezorValue = 0;
+            if (typeof currentSettings.privacyMode === 'undefined') currentSettings.privacyMode = false;
+
+            updateData();
+            setInterval(updateData, 60000);
+        });
+
+        async function updateData() {
+            if (!currentSettings.apiClientId || !currentSettings.apiPrivateKey) {
+                showError('Nejsou zadány API klíče. Otevři nastavení ⚙️.');
+                return;
+            }
+            hideError();
+
+            try {
+                const selectedFiat = currentSettings.currency || 'CZK';
+                const fiatLower = selectedFiat.toLowerCase();
+                
+                const activeCoins = SUPPORTED_COINS.filter(c => currentSettings.selectedCurrencies[c.symbol]);
+                const geckoIds = activeCoins.map(c => c.geckoId).join(',');
+                
+                if (activeCoins.length > 0) {
+                    const url = `https://api.coingecko.com/api/v3/coins/markets?vs_currency=${fiatLower}&ids=${geckoIds}&price_change_percentage=24h,7d,30d,1y`;
+                    const response = await fetch(url);
+                    const data = await response.json();
+                    
+                    marketData = {};
+                    data.forEach(coin => {
+                        marketData[coin.id] = coin;
+                    });
+                }
+
+                const balanceRes = await window.electronAPI.fetchCoinmateBalance();
+                
+                if (!balanceRes.success) {
+                    if(balanceRes.error === 'missing_keys') {
+                        showError('Chybí API klíče.');
+                        return;
+                    }
+                    throw new Error(balanceRes.error);
+                }
+
+                renderDashboard(activeCoins, balanceRes.data, selectedFiat, currentSettings.timeframe || '24h');
+
+            } catch (e) {
+                console.error(e);
+                showError(`Chyba načítání: ${e.message}`);
+            }
+        }
+
+        function renderDashboard(activeCoins, coinmateData, fiatCode, timeframe) {
+            dom.cryptoList.innerHTML = '';
+            
+            let currentPortfolioValue = 0;
+            let oldPortfolioValue = 0;
+
+            activeCoins.forEach(coin => {
+                const geckoId = coin.geckoId;
+                const symbol = coin.symbol;
+                
+                let coinmateBalance = 0;
+                if (coinmateData[symbol]) {
+                    coinmateBalance += parseFloat(coinmateData[symbol].available);
+                }
+                
+                let trezorBalance = 0;
+                if (symbol === 'BTC' && currentSettings.trezorValue > 0) {
+                    if (currentSettings.trezorUnit === 'BTC') {
+                        trezorBalance = currentSettings.trezorValue;
+                    } else {
+                        trezorBalance = currentSettings.trezorValue / 100000000;
+                    }
+                }
+
+                const totalBalance = coinmateBalance + trezorBalance;
+                const coinData = marketData[geckoId];
+                const currentPrice = coinData ? coinData.current_price : 0;
+                const currentValue = totalBalance * currentPrice;
+                
+                currentPortfolioValue += currentValue;
+
+                if (coinData && totalBalance > 0) {
+                    let pctChange = 0;
+                    if (timeframe === '24h') pctChange = coinData.price_change_percentage_24h;
+                    else if (timeframe === '7d') pctChange = coinData.price_change_percentage_7d_in_currency;
+                    else if (timeframe === '30d') pctChange = coinData.price_change_percentage_30d_in_currency;
+                    else if (timeframe === '1y') pctChange = coinData.price_change_percentage_1y_in_currency;
+
+                    if (pctChange == null) pctChange = 0;
+                    const oldPrice = currentPrice / (1 + (pctChange / 100));
+                    oldPortfolioValue += (totalBalance * oldPrice);
+                }
+
+                const card = document.createElement('div');
+                card.className = 'card flex justify-between items-start'; 
+                
+                const sensitiveClass = currentSettings.privacyMode ? 'blur-sensitive' : '';
+
+                let balanceRowsHTML = '';
+                
+                // A) Burza Řádek (IKONA GRAFU/TRENDU)
+                if (coinmateBalance > 0) {
+                    balanceRowsHTML += `
+                        <div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mt-1 ${sensitiveClass}">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4 opacity-70" title="Burza (Coinmate)">
+                                <path fill-rule="evenodd" d="M12 2.25a.75.75 0 01.75.75v16.5a.75.75 0 01-1.5 0V3a.75.75 0 01.75-.75zM8.25 5.75a.75.75 0 01.75.75v13.5a.75.75 0 01-1.5 0V6.5a.75.75 0 01.75-.75zM4.5 9.25a.75.75 0 01.75.75v9.75a.75.75 0 01-1.5 0v-9.75a.75.75 0 01.75-.75zM15.75 5.25a.75.75 0 01.75.75v12.75a.75.75 0 01-1.5 0V6a.75.75 0 01.75-.75zM19.5 8.25a.75.75 0 01.75.75v9.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75z" clip-rule="evenodd" />
+                            </svg>
+                            <span>${formatCrypto(coinmateBalance, symbol)}</span>
+                        </div>
+                    `;
+                }
+
+                // B) Trezor Řádek
+                if (trezorBalance > 0) {
+                    balanceRowsHTML += `
+                        <div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mt-1 ${sensitiveClass}">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4 text-yellow-500 opacity-80" title="Trezor (Cold Storage)">
+                                <path fill-rule="evenodd" d="M12 1.5a5.25 5.25 0 00-5.25 5.25v3a3 3 0 00-3 3v6.75a3 3 0 003 3h10.5a3 3 0 003-3v-6.75a3 3 0 00-3-3v-3c0-2.9-2.35-5.25-5.25-5.25zm3.75 8.25v-3a3.75 3.75 0 10-7.5 0v3h7.5z" clip-rule="evenodd" />
+                            </svg>
+                            <span>${formatCrypto(trezorBalance, symbol)}</span>
+                        </div>
+                    `;
+                }
+
+                if (totalBalance === 0) {
+                    balanceRowsHTML = `<div class="text-sm text-gray-500 mt-1 dark:text-gray-400 ${sensitiveClass}">0 ${symbol}</div>`;
+                }
+
+                card.innerHTML = `
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-bold bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded text-gray-700 dark:text-gray-300 tracking-wide">${symbol}</span>
+                            <h3 class="font-bold text-lg text-gray-900 dark:text-white">${coin.name}</h3>
+                        </div>
+                        <div class="mt-1 flex flex-col gap-0.5">
+                            ${balanceRowsHTML}
+                        </div>
+                    </div>
+                    <div class="text-right flex flex-col justify-center" style="min-height: 3.5rem;">
+                        <div class="font-bold text-lg text-gray-900 dark:text-white ${sensitiveClass}">${formatFiat(currentValue, fiatCode)}</div>
+                        <div class="text-xs text-gray-400">1 ${symbol} = ${formatFiat(currentPrice, fiatCode)}</div>
+                    </div>
+                `;
+                dom.cryptoList.appendChild(card);
+            });
+
+            dom.totalValue.textContent = formatFiat(currentPortfolioValue, fiatCode);
+            if (currentSettings.privacyMode) {
+                dom.totalValue.classList.add('blur-sensitive');
+            } else {
+                dom.totalValue.classList.remove('blur-sensitive');
+            }
+
+            if (oldPortfolioValue > 0) {
+                const totalChangePercent = ((currentPortfolioValue - oldPortfolioValue) / oldPortfolioValue) * 100;
+                updateTrendArrow(totalChangePercent);
+            } else {
+                dom.trendContainer.classList.add('hidden');
+            }
+        }
+
+        function updateTrendArrow(percent) {
+            dom.trendContainer.classList.remove('hidden');
+            dom.trendPercent.textContent = `${Math.abs(percent).toFixed(2)}%`;
+            
+            const arrow = dom.trendArrow;
+            const text = dom.trendPercent;
+            
+            arrow.classList.remove('rotate-45-up', 'rotate-45-down', 'rotate-0-flat', 'text-green-500', 'text-red-500', 'text-gray-500');
+            text.classList.remove('text-green-600', 'text-red-600', 'text-gray-600');
+
+            if (percent >= 0.05) {
+                arrow.classList.add('rotate-45-up', 'text-green-500');
+                text.classList.add('text-green-600');
+            } else if (percent <= -0.05) {
+                arrow.classList.add('rotate-45-down', 'text-red-500');
+                text.classList.add('text-red-600');
+            } else {
+                arrow.classList.add('rotate-0-flat', 'text-gray-500');
+                text.classList.add('text-gray-600');
+            }
+        }
+
+        function renderSettingsForm() {
+            dom.inputs.privacy.checked = currentSettings.privacyMode;
+            dom.inputs.currency.value = currentSettings.currency || 'CZK';
+            dom.inputs.timeframe.value = currentSettings.timeframe || '24h';
+            
+            if (currentSettings.trezorUnit === 'BTC') dom.inputs.trezorUnitBTC.checked = true;
+            else dom.inputs.trezorUnitSATS.checked = true;
+            
+            dom.inputs.trezorValue.value = currentSettings.trezorValue;
+            dom.inputs.clientId.value = currentSettings.apiClientId || '';
+            dom.inputs.pubKey.value = currentSettings.apiPublicKey || '';
+            dom.inputs.privKey.value = currentSettings.apiPrivateKey || '';
+
+            dom.inputs.currencies.innerHTML = '';
+            SUPPORTED_COINS.forEach(coin => {
+                const isChecked = currentSettings.selectedCurrencies[coin.symbol];
+                const div = document.createElement('div');
+                div.className = 'flex items-center space-x-2 bg-gray-100 dark:bg-gray-700 p-2 rounded';
+                div.innerHTML = `
+                    <input type="checkbox" id="cb-${coin.symbol}" ${isChecked ? 'checked' : ''} class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 cursor-pointer">
+                    <label for="cb-${coin.symbol}" class="text-xs font-medium cursor-pointer flex-grow dark:text-gray-200 select-none">${coin.name}</label>
+                `;
+                dom.inputs.currencies.appendChild(div);
+            });
+        }
+
+        dom.form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const selectedUnit = document.querySelector('input[name="trezor-unit"]:checked').value;
+
+            const newSettings = {
+                privacyMode: dom.inputs.privacy.checked,
+                currency: dom.inputs.currency.value,
+                timeframe: dom.inputs.timeframe.value,
+                trezorUnit: selectedUnit,
+                trezorValue: parseFloat(dom.inputs.trezorValue.value) || 0,
+                
+                apiClientId: dom.inputs.clientId.value,
+                apiPublicKey: dom.inputs.pubKey.value,
+                apiPrivateKey: dom.inputs.privKey.value,
+                selectedCurrencies: {}
+            };
+
+            SUPPORTED_COINS.forEach(coin => {
+                const cb = document.getElementById(`cb-${coin.symbol}`);
+                newSettings.selectedCurrencies[coin.symbol] = cb.checked;
+            });
+
+            await window.electronAPI.saveSettings(newSettings);
+            currentSettings = await window.electronAPI.getSettings();
+            dom.modal.classList.add('hidden');
+            
+            dom.cryptoList.innerHTML = '<div class="text-center mt-10 text-gray-500">Přepočítávám s novým nastavením...</div>';
+            updateData(); 
+        });
+
+        const openSettings = () => {
+            renderSettingsForm();
+            dom.modal.classList.remove('hidden');
+        };
+        
+        const closeSettings = () => dom.modal.classList.add('hidden');
+        const showError = (msg) => { dom.error.textContent = msg; dom.error.classList.remove('hidden'); };
+        const hideError = () => dom.error.classList.add('hidden');
+
+        document.getElementById('open-settings').addEventListener('click', openSettings);
+        document.getElementById('close-settings').addEventListener('click', closeSettings);
+    </script>
+</body>
+</html>
