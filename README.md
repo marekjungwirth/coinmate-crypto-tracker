@@ -11,9 +11,7 @@ A lightweight desktop application built with Electron for tracking Bitcoin excha
 * **Customizable:** Choose your primary currency (CZK/EUR/USD) and preferred units (BTC/Sats).
 * **Dark/Light Mode:** Automatically syncs with your macOS system theme.
 
-## 🛠️ Installation & Development
-
-These instructions are intended for developers who want to build the app from source.
+## 🛠️ Development
 
 ### Prerequisites
 
@@ -28,28 +26,15 @@ These instructions are intended for developers who want to build the app from so
     npm install
     ```
 
-2.  **Run the application:**
+2.  **Run in development mode:**
 
     ```bash
     npm start
     ```
 
-3.  **Build for macOS (.dmg):**
+## 📦 Building the App (macOS)
 
-    ```bash
-    npm run build
-    ```
+To create a standalone `.dmg` installer that you can distribute:
 
-## ⚙️ Configuration
-
-To fetch balances, you need to provide Coinmate API keys (read-only permission recommended):
-
-1.  Click the **Settings (⚙️)** icon in the top-right corner.
-2.  Navigate to the **Coinmate API** section.
-3.  Enter your **Client ID**, **Public Key**, and **Private Key**.
-
-> **Security Note:** Keys are stored locally in your user's *Application Support* folder.
-
-## 💻 License
-
-This project is licensed under the **ISC** license.
+```bash
+npm run build
