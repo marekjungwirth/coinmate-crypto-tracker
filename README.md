@@ -38,3 +38,29 @@ To create a standalone `.dmg` installer that you can distribute:
 
 ```bash
 npm run build
+```
+
+The installer will be generated in the `dist/` folder.
+
+### ⚠️ Note regarding macOS Gatekeeper
+
+Since this is an open-source project and not signed with a paid Apple Developer ID, macOS may block the app from opening ("Unidentified Developer").
+
+**To open the app for the first time:**
+1.  **Right-click** (or Control-click) the generated app icon.
+2.  Select **Open** from the context menu.
+3.  Click **Open** in the dialog box to confirm.
+
+## ⚙️ Configuration
+
+To fetch balances, you need to provide Coinmate API keys (read-only permission recommended):
+
+1.  Click the **Settings (⚙️)** icon in the top-right corner.
+2.  Navigate to the **Coinmate API** section.
+3.  Enter your **Client ID**, **Public Key**, and **Private Key**.
+
+> **Security Note:** Keys are stored locally in your user's *Application Support* folder.
+
+## 💻 License
+
+This project is licensed under the **ISC** license.
